@@ -1,10 +1,10 @@
-name: Upload File to Branch
+name: Upload File to Data Branch
 
 on:
-  workflow_dispatch:  # Allows manual triggering of this action
+  workflow_dispatch:  # Allows manual triggering of the workflow
   push:
     branches:
-      - main  # Trigger this workflow on push to the main branch
+      - main  # Trigger on push to the main branch
 
 jobs:
   upload-file:
@@ -17,30 +17,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '16'
+          node-version: '16'  # Specify the Node.js version you need
 
-      - name: Create or switch to data-branch
-        id: create_branch
-        run: |
-          # Check if the branch already exists
-          if git rev-parse --verify origin/data-branch; then
-            echo "Branch already exists."
-            git checkout data-branch
-          else
-            echo "Creating new branch data-branch."
-            git checkout -b data-branch
-          fi
+      - name: Install dependencies
+        run: npm install
 
-      - name: Add file
-        run: |
-          mkdir -p data
-          echo "This is an example file content." > data/myfile.txt
-          git add data/myfile.txt
-          git commit -m "Add or update data/myfile.txt"
-
-      - name: Push changes
+      - name: Run upload.js script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git push origin data-branch
-
+        run: node upload.js
