@@ -1,83 +1,46 @@
 name: Upload File to Branch
 
 on:
-  workflow_dispatch:  # Allows manual triggering of the action
-  schedule:
-    - cron: "0 0 * * *"  # Optional: Schedule to run at a specific time daily
+  workflow_dispatch:  # Allows manual triggering of this action
+  push:
+    branches:
+      - main  # Trigger this workflow on push to the main branch
 
 jobs:
-  upload_file:
+  upload-file:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-        with:
-          ref: main  # Change to your default branch if it's not "main"
 
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '16'  # Specify Node.js version
+          node-version: '16'
 
-      - name: Upload file to branch
+      - name: Create or switch to data-branch
+        id: create_branch
+        run: |
+          # Check if the branch already exists
+          if git rev-parse --verify origin/data-branch; then
+            echo "Branch already exists."
+            git checkout data-branch
+          else
+            echo "Creating new branch data-branch."
+            git checkout -b data-branch
+          fi
+
+      - name: Add file
+        run: |
+          mkdir -p data
+          echo "This is an example file content." > data/myfile.txt
+          git add data/myfile.txt
+          git commit -m "Add or update data/myfile.txt"
+
+      - name: Push changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_USERNAME: "your-username"  # Replace with your GitHub username
-          REPO_NAME: "your-repo"  # Replace with the repo name
-          FILE_PATH: "path/to/your/file.txt"  # Specify the path within the repo
-          BRANCH_NAME: "your-branch"  # Branch where the file will be stored
         run: |
-          # JavaScript code to create or update a file in the branch
-          const fetch = require('node-fetch');
-          const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
-          const REPO_NAME = process.env.REPO_NAME;
-          const FILE_PATH = process.env.FILE_PATH;
-          const BRANCH_NAME = process.env.BRANCH_NAME;
-          const TOKEN = process.env.GITHUB_TOKEN;
-          const content = "This is the content to be stored in the GitHub file in a specific branch.";
-          
-          async function createOrUpdateFileInBranch(content) {
-              const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`;
+          git push origin data-branch
 
-              const base64Content = Buffer.from(content).toString('base64');
-
-              let sha;
-              try {
-                  const response = await fetch(`${url}?ref=${BRANCH_NAME}`, {
-                      headers: {
-                          Authorization: `token ${TOKEN}`,
-                          Accept: 'application/vnd.github.v3+json'
-                      }
-                  });
-                  if (response.ok) {
-                      const data = await response.json();
-                      sha = data.sha;
-                  }
-              } catch (error) {
-                  console.log("File does not exist in the branch, creating a new one");
-              }
-
-              const method = 'PUT';
-              const response = await fetch(url, {
-                  method,
-                  headers: {
-                      Authorization: `token ${TOKEN}`,
-                      Accept: 'application/vnd.github.v3+json'
-                  },
-                  body: JSON.stringify({
-                      message: sha ? "Updating file in branch" : "Creating new file in branch",
-                      content: base64Content,
-                      branch: BRANCH_NAME,
-                      sha: sha
-                  })
-              });
-
-              if (response.ok) {
-                  console.log("File stored successfully in the branch!");
-              } else {
-                  console.error("Failed to store file:", await response.json());
-              }
-          }
-
-          createOrUpdateFileInBranch(content);
