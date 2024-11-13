@@ -12,12 +12,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3  # Updated to the latest version
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3  # Updated to the latest version
         with:
-          node-version: '18'  # Updated to a newer LTS version of Node.js (18.x)
+          node-version: '18'  # You can specify a specific Node.js version, like v18 for stability
 
       - name: Install dependencies
         run: |
