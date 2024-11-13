@@ -1,10 +1,10 @@
 const fetch = require('node-fetch');
 
 // GitHub repository details
-const USERNAME = 'Ai-dev3'; // Replace with your GitHub username
-const REPO_NAME = 'Nasa-data-repository'; // Replace with your repository name
-const MAIN_BRANCH = 'main'; // Main branch name
-const TARGET_BRANCH = 'data-branch'; // Target branch where files will be uploaded
+const USERNAME = 'Ai-dev3'; // Your GitHub username
+const REPO_NAME = 'Nasa-data-repository'; // Updated repository name
+const MAIN_BRANCH = 'main'; // The main branch name (can be 'master' or 'main')
+const TARGET_BRANCH = 'storage'; // Updated target branch name
 const TOKEN = process.env.GITHUB_TOKEN; // GitHub token for authentication
 
 // GitHub API URLs
@@ -15,10 +15,17 @@ const TARGET_BRANCH_URL = `${BASE_URL}/git/ref/heads/${TARGET_BRANCH}`;
 // Helper function to call GitHub API
 async function githubApi(path, options = {}) {
     const response = await fetch(`${BASE_URL}${path}`, {
-        headers: { 'Authorization': `token ${TOKEN}`, 'Content-Type': 'application/json' },
+        headers: { 
+            'Authorization': `token ${TOKEN}`, 
+            'Content-Type': 'application/json' 
+        },
         ...options
     });
-    if (!response.ok) throw new Error(`GitHub API error: ${response.statusText}`);
+    if (!response.ok) {
+        const error = await response.json();
+        console.error(`GitHub API error: ${error.message}`);
+        throw new Error(`GitHub API error: ${response.statusText}`);
+    }
     return response.json();
 }
 
@@ -27,7 +34,7 @@ async function createBranch() {
     try {
         await githubApi(`/git/ref/heads/${TARGET_BRANCH}`);
         console.log(`Branch ${TARGET_BRANCH} already exists.`);
-    } catch {
+    } catch (err) {
         console.log(`Creating new branch ${TARGET_BRANCH}...`);
         const mainBranchRef = await githubApi(`/git/ref/heads/${MAIN_BRANCH}`);
         const sha = mainBranchRef.object.sha;
@@ -50,33 +57,44 @@ async function uploadFile(filePath, fileContent) {
     try {
         const existingFile = await githubApi(`/contents/${filePathEncoded}?ref=${TARGET_BRANCH}`);
         sha = existingFile.sha;
-    } catch {
+    } catch (err) {
+        console.log(`File not found, will create a new file.`);
         sha = null;
     }
 
     // Create or update the file
-    await githubApi(`/contents/${filePathEncoded}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-            message: `Add/update ${filePath} on ${TARGET_BRANCH}`,
-            content,
-            branch: TARGET_BRANCH,
-            sha
-        })
-    });
-
-    console.log(`Uploaded ${filePath} to ${TARGET_BRANCH}`);
+    try {
+        await githubApi(`/contents/${filePathEncoded}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                message: `Add/update ${filePath} on ${TARGET_BRANCH}`,
+                content,
+                branch: TARGET_BRANCH,
+                sha
+            })
+        });
+        console.log(`Uploaded ${filePath} to ${TARGET_BRANCH}`);
+    } catch (err) {
+        console.error(`Failed to upload file: ${err.message}`);
+        throw err;
+    }
 }
 
 // Main function to create the branch and upload a file
 async function main() {
-    await createBranch();
-
-    // Specify the file path and content you want to upload
-    const filePath = 'data/myfile.txt'; // Adjust the file path as necessary
-    const fileContent = 'This is the content of the file!'; // Change the content here as needed
-
-    await uploadFile(filePath, fileContent);
+    try {
+        await createBranch();
+        // Specify the file path and content you want to upload
+        const filePath = 'data/myfile.txt'; // Adjust the file path as necessary
+        const fileContent = 'This is the content of the file!'; // Change the content here as needed
+        await uploadFile(filePath, fileContent);
+    } catch (err) {
+        console.error(`Error: ${err.message}`);
+        process.exit(1);
+    }
 }
 
-main().catch(console.error);
+main().catch(err => {
+    console.error(err);
+    process.exit(1);
+});
