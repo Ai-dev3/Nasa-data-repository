@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+const fetch = require('node-fetch'); // Using node-fetch for API requests
 
 // GitHub repository details
 const USERNAME = 'Ai-dev3'; // Your GitHub username
@@ -12,29 +12,41 @@ const BASE_URL = `https://api.github.com/repos/${USERNAME}/${REPO_NAME}`;
 const MAIN_BRANCH_URL = `${BASE_URL}/git/ref/heads/${MAIN_BRANCH}`;
 const TARGET_BRANCH_URL = `${BASE_URL}/git/ref/heads/${TARGET_BRANCH}`;
 
-// Helper function to call GitHub API
+// Helper function to call GitHub API with error logging
 async function githubApi(path, options = {}) {
-    const response = await fetch(`${BASE_URL}${path}`, {
-        headers: { 
-            'Authorization': `token ${TOKEN}`, 
-            'Content-Type': 'application/json' 
-        },
-        ...options
-    });
-    if (!response.ok) {
-        const error = await response.json();
-        console.error(`GitHub API error: ${error.message}`);
-        throw new Error(`GitHub API error: ${response.statusText}`);
+    console.log(`Calling GitHub API: ${BASE_URL}${path}`);
+    try {
+        const response = await fetch(`${BASE_URL}${path}`, {
+            headers: { 
+                'Authorization': `token ${TOKEN}`, 
+                'Content-Type': 'application/json' 
+            },
+            ...options
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            console.error(`GitHub API error: ${error.message}`);
+            throw new Error(`GitHub API error: ${response.statusText}`);
+        }
+
+        console.log(`API Response OK: ${path}`);
+        return response.json();
+    } catch (error) {
+        console.error(`Error during GitHub API request: ${error.message}`);
+        throw error; // Re-throw the error to be caught by the caller
     }
-    return response.json();
 }
 
-// Step 1: Check if target branch exists, if not, create it
+// Step 1: Check if the target branch exists, if not, create it
 async function createBranch() {
     try {
+        // Check if the target branch exists
+        console.log(`Checking if the ${TARGET_BRANCH} branch exists...`);
         await githubApi(`/git/ref/heads/${TARGET_BRANCH}`);
         console.log(`Branch ${TARGET_BRANCH} already exists.`);
     } catch (err) {
+        // If branch doesn't exist, create it
         console.log(`Creating new branch ${TARGET_BRANCH}...`);
         const mainBranchRef = await githubApi(`/git/ref/heads/${MAIN_BRANCH}`);
         const sha = mainBranchRef.object.sha;
@@ -52,18 +64,20 @@ async function uploadFile(filePath, fileContent) {
     const filePathEncoded = encodeURIComponent(filePath);
     const content = Buffer.from(fileContent).toString('base64');
 
-    // Check if the file already exists on the target branch
     let sha;
     try {
+        console.log(`Checking if file ${filePath} already exists in the branch...`);
+        // Check if the file already exists in the target branch
         const existingFile = await githubApi(`/contents/${filePathEncoded}?ref=${TARGET_BRANCH}`);
         sha = existingFile.sha;
+        console.log(`File ${filePath} exists, updating it...`);
     } catch (err) {
-        console.log(`File not found, will create a new file.`);
+        console.log(`File ${filePath} not found, will create a new file.`);
         sha = null;
     }
 
-    // Create or update the file
     try {
+        console.log(`Uploading file ${filePath} to ${TARGET_BRANCH}...`);
         await githubApi(`/contents/${filePathEncoded}`, {
             method: 'PUT',
             body: JSON.stringify({
@@ -83,18 +97,20 @@ async function uploadFile(filePath, fileContent) {
 // Main function to create the branch and upload a file
 async function main() {
     try {
-        await createBranch();
+        console.log("Starting upload process...");
+        await createBranch(); // Ensure the target branch exists
         // Specify the file path and content you want to upload
         const filePath = 'data/myfile.txt'; // Adjust the file path as necessary
         const fileContent = 'This is the content of the file!'; // Change the content here as needed
-        await uploadFile(filePath, fileContent);
+        await uploadFile(filePath, fileContent); // Upload the file
     } catch (err) {
-        console.error(`Error: ${err.message}`);
-        process.exit(1);
+        console.error(`Error in the upload process: ${err.message}`);
+        process.exit(1); // Exit with a failure code
     }
 }
 
+// Run the main function
 main().catch(err => {
-    console.error(err);
-    process.exit(1);
+    console.error(`Fatal error: ${err.message}`);
+    process.exit(1); // Exit with a failure code
 });
