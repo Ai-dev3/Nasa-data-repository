@@ -1,68 +1,47 @@
-// Dependencies
-const fetch = require('node-fetch'); // Ensure node-fetch is installed
-const fs = require('fs');
-const path = require('path');
+document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
 
-// Configurations
-const filePath = 'path/to/your/file.pdf';  // Local path to the file you want to upload
-const USERNAME = 'Ai-dev3';  // Your GitHub username
-const REPO_NAME = 'Nasa-data-repository';  // Repository name
-const BRANCH = 'storage';  // Target branch in your repository
-const FILE_PATH = 'files/file.pdf';  // Path in the repository where file will be uploaded
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0];
 
-// Environment Variable for GitHub Token (replace with your actual token if testing locally)
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-
-// Function to validate file type
-function isFileTypeAllowed(filePath) {
-    const allowedExtensions = ['.pdf', '.txt', '.jpg', '.png', '.json'];  // Allowed file types
-    const fileExtension = path.extname(filePath).toLowerCase();
-    return allowedExtensions.includes(fileExtension);
-}
-
-// Function to upload file to GitHub
-async function uploadFileToGitHub() {
-    try {
-        // Check file type
-        if (!isFileTypeAllowed(filePath)) {
-            throw new Error('File type not allowed.');
-        }
-
-        // Check if file exists and read the content
-        if (!fs.existsSync(filePath)) {
-            throw new Error('File does not exist.');
-        }
-        const fileContent = fs.readFileSync(filePath, { encoding: 'base64' });
-
-        // GitHub API URL for file upload
-        const url = `https://api.github.com/repos/${USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`;
-
-        // API request to upload file
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${GITHUB_TOKEN}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                message: `Upload ${path.basename(filePath)}`,
-                content: fileContent,
-                branch: BRANCH,
-            }),
-        });
-
-        // Error handling for API response
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`GitHub API error ${response.status}: ${errorData.message}`);
-        }
-
-        const data = await response.json();
-        console.log('File uploaded successfully:', data);
-    } catch (error) {
-        console.error('Failed to upload file:', error.message);
+    if (!file) {
+        alert('Please select a file to upload.');
+        return;
     }
-}
 
-// Execute the upload function
-uploadFileToGitHub();
+    // Convert the file to base64
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = async function() {
+        const base64Content = reader.result.split(',')[1];  // Get base64 part of DataURL
+
+        try {
+            // GitHub API endpoint for uploading files to a specific path
+            const response = await fetch(`https://api.github.com/repos/Ai-dev3/Nasa-data-repository/contents/${file.name}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer YOUR_GITHUB_TOKEN`,  // Replace with your GitHub token
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({
+                    message: `Upload ${file.name}`,
+                    content: base64Content,
+                    branch: 'storage'  // Target branch
+                })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert(`File uploaded successfully.`);
+            } else {
+                console.error('Failed to upload file:', result);
+                alert(`Failed to upload file: ${result.message}`);
+            }
+        } catch (error) {
+            console.error('Error during file upload:', error);
+            alert('An error occurred during the upload.');
+        }
+    };
+});
+
