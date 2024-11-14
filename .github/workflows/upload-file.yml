@@ -1,13 +1,8 @@
-name: Upload File to Storage Branch
+name: Upload File to Repository
 
 on:
-  workflow_dispatch:  # Allows the workflow to be triggered manually
-  push:
-    branches:
-      - main  # Trigger when changes are pushed to the main branch
-
-permissions:
-  contents: write  # Allow GitHub Actions to write to the repository
+  repository_dispatch:
+    types: [file_upload]  # Triggered by front-end sending the 'file_upload' event
 
 jobs:
   upload-file:
@@ -15,25 +10,19 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3  # Updated to the latest version
-        with:
-          fetch-depth: 0  # Ensures all history is fetched for debugging
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3  # Updated to the latest version
+        uses: actions/setup-node@v3
         with:
-          node-version: '20'  # Specify Node.js version 20
-        id: node
+          node-version: '20'
 
       - name: Install dependencies
         run: |
-          echo "Installing dependencies..."
           npm install
-          npm list --depth=0  # List installed dependencies for debugging
 
-      - name: Run upload.js script
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Access the secret here
+      - name: Upload file to GitHub repository
         run: |
-          echo "Running upload.js script"
           node upload.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
