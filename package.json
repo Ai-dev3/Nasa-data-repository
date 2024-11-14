@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A repository for NASA data and file uploads",
   "main": "upload.js",
+  "type": "module",
   "scripts": {
     "start": "node upload.js"
   },
