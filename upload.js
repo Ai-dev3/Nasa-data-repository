@@ -1,10 +1,10 @@
-import fetch from 'node-fetch'; // Using node-fetch for API requests
+import fetch from 'node-fetch'; // Use dynamic import for ESM support
 
 // GitHub repository details
 const USERNAME = 'Ai-dev3'; // Your GitHub username
-const REPO_NAME = 'Nasa-data-repository'; // Updated repository name
+const REPO_NAME = 'Nasa-data-repository'; // Your repository name
 const MAIN_BRANCH = 'main'; // The main branch name (can be 'master' or 'main')
-const TARGET_BRANCH = 'storage'; // Updated target branch name
+const TARGET_BRANCH = 'storage'; // The target branch name (storage)
 const TOKEN = process.env.GITHUB_TOKEN; // GitHub token for authentication
 
 // GitHub API URLs
@@ -67,17 +67,13 @@ async function uploadFile(filePath, fileContent) {
     let sha;
     try {
         console.log(`Checking if file ${filePath} already exists in the branch...`);
-        // Check if the file exists in the target branch and get its SHA
+        // Check if the file already exists in the target branch
         const existingFile = await githubApi(`/contents/${filePathEncoded}?ref=${TARGET_BRANCH}`);
-        sha = existingFile.sha; // Get the file's current SHA
+        sha = existingFile.sha;
         console.log(`File ${filePath} exists, updating it...`);
     } catch (err) {
-        if (err.message.includes('404')) {
-            console.log(`File ${filePath} not found, will create a new file.`);
-            sha = null; // The file does not exist, set sha to null to create a new file
-        } else {
-            throw err; // If the error is something else, rethrow it
-        }
+        console.log(`File ${filePath} not found, will create a new file.`);
+        sha = null;
     }
 
     try {
@@ -88,13 +84,13 @@ async function uploadFile(filePath, fileContent) {
                 message: `Add/update ${filePath} on ${TARGET_BRANCH}`,
                 content,
                 branch: TARGET_BRANCH,
-                sha // Include the sha if the file exists (for updating)
+                sha
             })
         });
         console.log(`Uploaded ${filePath} to ${TARGET_BRANCH}`);
     } catch (err) {
         console.error(`Failed to upload file: ${err.message}`);
-        throw err; // Re-throw the error to stop execution
+        throw err;
     }
 }
 
