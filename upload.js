@@ -67,13 +67,17 @@ async function uploadFile(filePath, fileContent) {
     let sha;
     try {
         console.log(`Checking if file ${filePath} already exists in the branch...`);
-        // Check if the file already exists in the target branch
+        // Check if the file exists in the target branch and get its SHA
         const existingFile = await githubApi(`/contents/${filePathEncoded}?ref=${TARGET_BRANCH}`);
-        sha = existingFile.sha;
+        sha = existingFile.sha; // Get the file's current SHA
         console.log(`File ${filePath} exists, updating it...`);
     } catch (err) {
-        console.log(`File ${filePath} not found, will create a new file.`);
-        sha = null;
+        if (err.message.includes('404')) {
+            console.log(`File ${filePath} not found, will create a new file.`);
+            sha = null; // The file does not exist, set sha to null to create a new file
+        } else {
+            throw err; // If the error is something else, rethrow it
+        }
     }
 
     try {
@@ -84,13 +88,13 @@ async function uploadFile(filePath, fileContent) {
                 message: `Add/update ${filePath} on ${TARGET_BRANCH}`,
                 content,
                 branch: TARGET_BRANCH,
-                sha
+                sha // Include the sha if the file exists (for updating)
             })
         });
         console.log(`Uploaded ${filePath} to ${TARGET_BRANCH}`);
     } catch (err) {
         console.error(`Failed to upload file: ${err.message}`);
-        throw err;
+        throw err; // Re-throw the error to stop execution
     }
 }
 
@@ -110,11 +114,6 @@ async function main() {
 }
 
 // Run the main function
-main().catch(err => {
-    console.error(`Fatal error: ${err.message}`);
-    process.exit(1); // Exit with a failure code
-});
-
 main().catch(err => {
     console.error(`Fatal error: ${err.message}`);
     process.exit(1); // Exit with a failure code
