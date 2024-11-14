@@ -1,4 +1,4 @@
-const fetch = require('node-fetch'); // Using node-fetch for API requests
+import fetch from 'node-fetch'; // Using node-fetch for API requests
 
 // GitHub repository details
 const USERNAME = 'Ai-dev3'; // Your GitHub username
@@ -110,6 +110,11 @@ async function main() {
 }
 
 // Run the main function
+main().catch(err => {
+    console.error(`Fatal error: ${err.message}`);
+    process.exit(1); // Exit with a failure code
+});
+
 main().catch(err => {
     console.error(`Fatal error: ${err.message}`);
     process.exit(1); // Exit with a failure code
