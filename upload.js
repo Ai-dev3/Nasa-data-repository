@@ -1,18 +1,19 @@
-import fetch from 'node-fetch'; // Use dynamic import for ESM support
+// Importing the 'node-fetch' package to make API requests
+import fetch from 'node-fetch';  // Use dynamic import() if you encounter issues with 'require'
 
 // GitHub repository details
-const USERNAME = 'Ai-dev3'; // Your GitHub username
-const REPO_NAME = 'Nasa-data-repository'; // Your repository name
-const MAIN_BRANCH = 'main'; // The main branch name (can be 'master' or 'main')
-const TARGET_BRANCH = 'storage'; // The target branch name (storage)
-const TOKEN = process.env.GITHUB_TOKEN; // GitHub token for authentication
+const USERNAME = 'Ai-dev3';  // Your GitHub username
+const REPO_NAME = 'Nasa-data-repository';  // Your repository name
+const MAIN_BRANCH = 'main';  // The main branch name (can be 'master' or 'main')
+const TARGET_BRANCH = 'storage';  // The branch where the file will be uploaded
+const TOKEN = process.env.GITHUB_TOKEN;  // GitHub token for authentication
 
-// GitHub API URLs
+// GitHub API base URL
 const BASE_URL = `https://api.github.com/repos/${USERNAME}/${REPO_NAME}`;
 const MAIN_BRANCH_URL = `${BASE_URL}/git/ref/heads/${MAIN_BRANCH}`;
 const TARGET_BRANCH_URL = `${BASE_URL}/git/ref/heads/${TARGET_BRANCH}`;
 
-// Helper function to call GitHub API with error logging
+// Helper function to call GitHub API
 async function githubApi(path, options = {}) {
     console.log(`Calling GitHub API: ${BASE_URL}${path}`);
     try {
@@ -34,7 +35,7 @@ async function githubApi(path, options = {}) {
         return response.json();
     } catch (error) {
         console.error(`Error during GitHub API request: ${error.message}`);
-        throw error; // Re-throw the error to be caught by the caller
+        throw error;
     }
 }
 
@@ -61,8 +62,8 @@ async function createBranch() {
 
 // Step 2: Upload a file to the target branch
 async function uploadFile(filePath, fileContent) {
-    const filePathEncoded = encodeURIComponent(filePath);
-    const content = Buffer.from(fileContent).toString('base64');
+    const filePathEncoded = encodeURIComponent(filePath);  // URL-encode the file path
+    const content = Buffer.from(fileContent).toString('base64');  // Convert file content to base64
 
     let sha;
     try {
@@ -82,9 +83,9 @@ async function uploadFile(filePath, fileContent) {
             method: 'PUT',
             body: JSON.stringify({
                 message: `Add/update ${filePath} on ${TARGET_BRANCH}`,
-                content,
-                branch: TARGET_BRANCH,
-                sha
+                content,  // File content in base64
+                branch: TARGET_BRANCH,  // Target branch
+                sha  // If updating, pass the SHA of the existing file
             })
         });
         console.log(`Uploaded ${filePath} to ${TARGET_BRANCH}`);
@@ -98,19 +99,19 @@ async function uploadFile(filePath, fileContent) {
 async function main() {
     try {
         console.log("Starting upload process...");
-        await createBranch(); // Ensure the target branch exists
+        await createBranch();  // Ensure the target branch exists
         // Specify the file path and content you want to upload
-        const filePath = 'data/myfile.txt'; // Adjust the file path as necessary
-        const fileContent = 'This is the content of the file!'; // Change the content here as needed
-        await uploadFile(filePath, fileContent); // Upload the file
+        const filePath = 'data/myfile.txt';  // Path to the file in your repository
+        const fileContent = 'This is the content of the file!';  // File content to upload
+        await uploadFile(filePath, fileContent);  // Upload the file
     } catch (err) {
         console.error(`Error in the upload process: ${err.message}`);
-        process.exit(1); // Exit with a failure code
+        process.exit(1);  // Exit with a failure code
     }
 }
 
 // Run the main function
 main().catch(err => {
     console.error(`Fatal error: ${err.message}`);
-    process.exit(1); // Exit with a failure code
+    process.exit(1);  // Exit with a failure code
 });
