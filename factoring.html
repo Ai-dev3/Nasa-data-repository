@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Island Adventure: Factoring Quest</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    .overlay {
+      background: rgba(255, 255, 255, 0.95);
+      margin: 50px auto;
+      padding: 20px;
+      max-width: 800px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .lesson {
+      margin-bottom: 20px;
+    }
+    .input-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px 0;
+    }
+    .input-group input {
+      padding: 5px;
+      margin: 0 5px;
+      width: 80px;
+      text-align: center;
+    }
+    .input-group button {
+      padding: 5px 10px;
+      margin-left: 10px;
+    }
+    .feedback {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    #canvasContainer {
+      text-align: center;
+      margin: 20px 0;
+    }
+    canvas {
+      border: 2px solid #333;
+      background-color: #e0f7fa;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <h1>Island Adventure: Factoring Quest</h1>
+    <div class="lesson">
+      <p>Ahoy, treasure seeker! Today, you will learn how to <strong>factor</strong> a quadratic expression—a bit like breaking down a treasure map into clues to find the hidden loot.</p>
+      <p>In algebra, <em>factoring</em> a quadratic means rewriting an expression like <strong>x<sup>2</sup> + bx + c</strong> as the product of two binomials, for example:</p>
+      <p><strong>x<sup>2</sup> + 5x + 6 = (x + 2)(x + 3)</strong></p>
+      <p>Notice how <em>2</em> and <em>3</em> add up to 5 and multiply to 6.</p>
+    </div>
+    
+    <h2>The Treasure Map Challenge</h2>
+    <p>Your challenge is to factor the quadratic expression below. Enter the two numbers that add up to <strong>5</strong> (the coefficient of x) and multiply to <strong>6</strong> (the constant term).</p>
+    <p><strong>Expression:</strong> x<sup>2</sup> + 5x + 6</p>
+    
+    <div class="input-group">
+      <label for="factor1">Factor 1: (x + </label>
+      <input type="number" id="factor1" value="" step="1">
+      <span>)</span>
+    </div>
+    <div class="input-group">
+      <label for="factor2">Factor 2: (x + </label>
+      <input type="number" id="factor2" value="" step="1">
+      <span>)</span>
+    </div>
+    <div class="input-group" style="justify-content: center;">
+      <button id="checkButton">Check Your Answer</button>
+      <button id="resetButton">Reset Map</button>
+    </div>
+    
+    <div id="canvasContainer">
+      <canvas id="islandCanvas" width="600" height="400"></canvas>
+    </div>
+    
+    <div class="feedback" id="feedback"></div>
+    
+    <script>
+      const canvas = document.getElementById('islandCanvas');
+      const ctx = canvas.getContext('2d');
+      const feedback = document.getElementById('feedback');
+
+      // Draw a simple island scene on the canvas
+      function drawIslandScene() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Draw the ocean
+        ctx.fillStyle = '#80d0ff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Draw an island (a simple ellipse)
+        ctx.fillStyle = '#c2b280';
+        ctx.beginPath();
+        ctx.ellipse(canvas.width / 2, canvas.height / 2, 100, 60, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        // Draw a treasure X on the island if factoring is correct (initially hidden)
+      }
+      
+      // Function to mark treasure on the island (X mark)
+      function markTreasure() {
+        ctx.fillStyle = 'red';
+        ctx.font = 'bold 48px serif';
+        ctx.fillText('X', canvas.width / 2 - 15, canvas.height / 2 + 15);
+      }
+      
+      // Check the user input for correct factoring of x^2 + 5x + 6
+      function checkFactors() {
+        const f1 = parseInt(document.getElementById('factor1').value, 10);
+        const f2 = parseInt(document.getElementById('factor2').value, 10);
+        if (isNaN(f1) || isNaN(f2)) {
+          feedback.textContent = "Please enter valid numbers for both factors.";
+          return;
+        }
+        // For x^2 + 5x + 6, we need numbers that add to 5 and multiply to 6.
+        if (f1 + f2 === 5 && f1 * f2 === 6) {
+          feedback.textContent = `Ahoy! The treasure is revealed: (x + ${f1})(x + ${f2}) is the correct factorization.`;
+          markTreasure();
+        } else {
+          feedback.textContent = "No treasure here—try again! Make sure the numbers add up to 5 and multiply to 6.";
+        }
+      }
+      
+      // Reset the lesson (clear feedback and redraw the scene)
+      function resetLesson() {
+        document.getElementById('factor1').value = "";
+        document.getElementById('factor2').value = "";
+        feedback.textContent = "";
+        drawIslandScene();
+      }
+      
+      // Attach event listeners
+      document.getElementById('checkButton').addEventListener('click', checkFactors);
+      document.getElementById('resetButton').addEventListener('click', resetLesson);
+      
+      // Initial drawing of the island scene
+      drawIslandScene();
+    </script>
+  </div>
+</body>
+</html>
